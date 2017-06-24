@@ -36,6 +36,7 @@ trait HBTShell extends MainGenericRunner {
     .addOption("kc", "krb5conf", true, "krb5.conf file path")
     .addOption("p", "principal", true, "kerberos principal to use")
     .addOption("kt", "keytab", true, "kerberos principal's keytab to use")
+    .addOption("d", "confdir", true, "configuration files directory")
 
   // Process command line options
   private def parseArgs(args: Array[String]): CommandLine = {
