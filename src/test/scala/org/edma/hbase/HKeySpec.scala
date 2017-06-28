@@ -33,7 +33,40 @@ class HKeySpec extends FreeSpec {
 
     "created as a multiple value" - {
 
-      val skey = HKey("Hello")
+      val mkey = HKey(List("ABC", "DEF"))
+      "produces an HMultipleKey instance" in {
+        assert(mkey.isMultiple)
+        assert(mkey.toString === "M[\"ABC\",\"DEF\"]")
+      }
+      "is always sorted" - {
+        val mkeyo = HKey(List("789", "456", "123"))
+        "at initialization" in {
+          assert(mkeyo.isMultiple)
+          assert(mkeyo.toString === "M[\"123\",\"456\",\"789\"]")
+        }
+        "after insertion" in {
+          val mkeyo2 = mkeyo + "567"
+          assert(mkeyo2.isMultiple)
+          assert(mkeyo2.toString === "M[\"123\",\"456\",\"567\",\"789\"]")
+        }
+      }
+      "eliminates duplicates" - {
+        val mkeyd = HKey(List("789", "456", "123", "456", "789")) //> mkeyd  : org.edma.hbase.HKey = M["123","456","789"]
+        "at initialization" in {
+          assert(mkeyd.isMultiple)
+          assert(mkeyd.toString === "M[\"123\",\"456\",\"789\"]")
+        }
+        "at insertion" in {
+          val mkeyd2 = mkeyd + "456"          
+          assert(mkeyd2.isMultiple)
+          assert(mkeyd2.toString === "M[\"123\",\"456\",\"789\"]")
+        }
+      }
+      
+
+      val mkey2 = mkey to "XYZ" //> mkey2  : org.edma.hbase.HKey = Invalid
+      val mkey3 = mkey + "XYZ" //> mkey3  : org.edma.hbase.HKey = M["ABC","DEF","XYZ"]
+      val mkey4 = mkey3 ++ List("GHI", "JKL") //> mkey4  : org.edma.hbase.HKey = M["ABC","DEF","GHI","JKL","XYZ"]
 
     }
 
@@ -70,9 +103,7 @@ class HKeySpec extends FreeSpec {
 
     "created as a range key" - {
       val rkey = HKey from ("ABC") to ("DEF")
-      val rkey2 = rkey to "XYZ" //> rkey3  : org.edma.hbase.HKey = Invalid
-      val rkey4 = rkey to "BAA" //> rkey4  : org.edma.hbase.HKey = Invalid
-      
+
       "produces a range key" in {
         assert(rkey.isRange)
         assert(rkey.toString === "R[\"ABC\" -> \"DEF\"]")
@@ -93,14 +124,6 @@ class HKeySpec extends FreeSpec {
       }
     }
 
-    val mkey = HKey(List("ABC", "DEF")) //> mkey  : org.edma.hbase.HKey = M["ABC","DEF"]
-    val mkeyd = HKey(List("789", "456", "123", "456", "789")) //> mkeyd  : org.edma.hbase.HKey = M["123","456","789"]
-    val mkeyo = HKey(List("789", "456", "123")) //> mkeyo  : org.edma.hbase.HKey = M["123","456","789"]
-    val mkeyo2 = mkeyo + "456" //> mkeyo2  : org.edma.hbase.HKey = M["123","456","789"]
-
-    val mkey2 = mkey to "XYZ" //> mkey2  : org.edma.hbase.HKey = Invalid
-    val mkey3 = mkey + "XYZ" //> mkey3  : org.edma.hbase.HKey = M["ABC","DEF","XYZ"]
-    val mkey4 = mkey3 ++ List("GHI", "JKL") //> mkey4  : org.edma.hbase.HKey = M["ABC","DEF","GHI","JKL","XYZ"]
 
     val tkey = HKey("123", "456") //> tkey  : org.edma.hbase.HKey = M["123","456"]
     val tkeyd = HKey("789", "456", "123", "456", "789")
