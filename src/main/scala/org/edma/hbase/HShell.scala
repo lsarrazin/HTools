@@ -93,7 +93,7 @@ class HShell(conf: HConfiguration) {
     val nname = normalizeTableName(tname)
     echo(f"Querying $nname for schema")
     
-    val table: HTable = new HTable(conn, nname)
+    val table: HTable = HTable(conn, nname)
     val schema: HSchema = new HSchema(table)
     echo(schema.toJSon)
   }

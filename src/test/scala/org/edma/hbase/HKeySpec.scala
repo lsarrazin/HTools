@@ -51,7 +51,7 @@ class HKeySpec extends FreeSpec {
         }
       }
       "eliminates duplicates" - {
-        val mkeyd = HKey(List("789", "456", "123", "456", "789")) //> mkeyd  : org.edma.hbase.HKey = M["123","456","789"]
+        val mkeyd = HKey(List("789", "456", "123", "456", "789"))
         "at initialization" in {
           assert(mkeyd.isMultiple)
           assert(mkeyd.toString === "M[\"123\",\"456\",\"789\"]")

@@ -24,9 +24,9 @@ package object hbase {
   val defaultHBaseSite = "/etc/hbase/conf/hbase-site.xml"
 
   /** Constants */
-  val databases: String = "databases"
-  val namespaces: String = "namespaces"
-  val tables: String = "tables"
+  final val databases: String = "databases"
+  final val namespaces: String = "namespaces"
+  final val tables: String = "tables"
   
   /** Technical information within HBase */
   val schemaRowId: Array[Byte] = "$$EDMA$$"

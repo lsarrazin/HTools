@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.{ CellUtil, HBaseConfiguration, HTableDescriptor, TableName }
 import scala.collection.JavaConverters._
 
-trait HTableFunctions {
+trait HTableInterface {
 
   val tname: String
 
@@ -32,13 +32,23 @@ trait HTableFunctions {
   /** Raw table name (without namespace) */
   def getTableName: String =
     if (tname.contains(':')) { tname.split(':')(1) } else { tname }
-  
+
   def hquery(conn: HConnection)(rowId: Get) = {
-    
+
   }
+
+  /** Single value read */
+  def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte]
+
+  /** Single CF read */
+  def get(key: Array[Byte], cf: Array[Byte]): Result
+
+  /** Single value write */
+  def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]): Unit
+
 }
 
-class HTable(conn: HConnection, name: String) extends HTableFunctions {
+class HTable(conn: HConnection, name: String) extends HTableInterface {
 
   val tname: String = name
 
@@ -50,21 +60,22 @@ class HTable(conn: HConnection, name: String) extends HTableFunctions {
 
   /** HBase table handler */
   lazy val table: Table = conn.getTable(tableName)
-  
+
   /** Single value read */
-  def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte] = {
+  override def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte] = {
     val get: Get = new Get(key).addColumn(cf, cq)
     val result: Result = table.get(get)
     result.value
   }
 
-  def get(key: Array[Byte], cf: Array[Byte]): Result = {
+  /** Single cf read */
+  override def get(key: Array[Byte], cf: Array[Byte]): Result = {
     val get: Get = new Get(key).addFamily(cf)
     table.get(get)
   }
 
   /** Single value write */
-  def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]) = {
+  override def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]) = {
     val put: Put = if (ts < 0) {
       new Put(key).addColumn(cf, cq, value)
     } else {
@@ -74,9 +85,35 @@ class HTable(conn: HConnection, name: String) extends HTableFunctions {
   }
 }
 
-object HTestTable extends HTableFunctions {
+class HInvalidTable(conn: HConnection, name: String) extends HTable(conn, name) {
 
-  val tname: String = "test:test"
+  /** Single value read */
+  override def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte] = {
+    error("Read attempt on inexisting table " + tname)
+    new Array[Byte](0)
+  }
+
+  override def get(key: Array[Byte], cf: Array[Byte]): Result = {
+    error("Read attempt on inexisting table " + tname)
+    new Result
+  }
+
+  /** Single value write */
+  override def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]) = {
+    error("Write attempt on inexisting table " + tname)
+  }
+
+}
+
+object HTable {
+
+  def apply(conn: HConnection, name: String): HTable = {
+    if (conn.hasTable(TableName.valueOf(name))) {
+      new HTable(conn, name)
+    } else {
+      new HInvalidTable(conn, name)
+    }
+  }
 
 }
 

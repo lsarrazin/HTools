@@ -28,36 +28,43 @@ Kerberos is used by default.
 ## HBaseTools commands
 
 ### HBase default instance
-When the REPL starts, it creates an HBase wrapper named as hbase using the following code :
+When the REPL starts, it creates an HConfiguration and an HShell instance as follows :
 ```scala
-val hbase: org.edma.hbase.HBaseWrapper = HBaseWrapper.create
-// Repeat for each command line parameter
-hbase.configure(<opt>, <arg>)
+val hconf0 = new org.edma.hbase.HConfiguration
+val hsh = org.edma.hbase.HShell.create(hconf0)
 ```
 ### HBase connection
 To connect to HBase, you must call the connect method, using either :
 ```scala
 // Connecting from kerberos identifiers given through the command line
-hbase connect
+connect
 
 // Connecting using a different principal and keytab
-hbase connect (<keytab>, <principal>)
+hsh.connect(<keytab>, <principal>)
 ```
 ### HBase schema commands
 The following commands are defined
 ```scala
 // List namespaces
-hbase show databases
-hbase show namespaces
+hsh show databases
+hsh show namespaces
 
 // List tables
-hbase show tables
+hsh show tables
 ```
 Alternatively, you can get HBase tables using the list command
 ```scala
 // Get list of available tables
-val tables = hbase list
-tables.foreach(println)
+val tlist: Array[String] = hsh list
+tlist.foreach(println)
+```
+
+### HBase table commands
+
+```scala
+// Working with tables
+val tlist = hsh list
+hsh.desc tlist(0)
 ```
 
 # Readme help -- REMOVE when mastered

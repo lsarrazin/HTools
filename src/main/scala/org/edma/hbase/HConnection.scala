@@ -137,6 +137,8 @@ class HConnection(conf: HConfiguration) {
   /** Retrieve HBase table handler */
   def getTable(tname: TableName): Table = connection.get.getTable(tname)
 
+  /** Check if HBase table exists */
+  def hasTable(tname: TableName): Boolean = adminCall(false)(_.tableExists(tname))
 }
 
 object HConnection {

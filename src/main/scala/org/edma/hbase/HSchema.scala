@@ -72,7 +72,19 @@ class HSchema(table: HTable) {
 
   private def loadFromTable: SchemaTable = {
     val rawSchema: Array[Byte] = table.get(schemaRowId, schemaCfId, schemaCqId)
-    jsonToSchema(rawSchema)
+    if (rawSchema.length > 0) {
+      try { 
+        jsonToSchema(rawSchema) 
+      } catch {
+        case any: Throwable => {
+          error(any.getMessage)
+          noSchema
+        }
+      }
+    } else {
+      error("Schema not found")
+      noSchema
+    }
   }
   
   /** infer schema from table
