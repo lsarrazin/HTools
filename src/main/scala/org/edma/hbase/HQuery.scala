@@ -18,12 +18,22 @@ new HQuery(table)
   
  */
 
-class HQuery(table: HTable) {
-  
-  lazy val schema: HSchema = new HSchema(table)
-  
-  def select(col: String): HQuery = {
-    this
-  }
+/**
+ * Implements columns selection
+ */
+trait HQueryColumnSelection {
   
 }
+
+object HSampleQuery {
+  
+}
+
+/**
+ * Implements rows selection
+ */
+trait HQueryRowSelection {
+  
+}
+
+class HQuery(table: HTable, selection: HSelection, key: HKey)
