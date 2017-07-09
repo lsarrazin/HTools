@@ -2,132 +2,45 @@ package org.edma.hbase
 
 import org.scalatest._
 
-class HKeySpec extends FreeSpec {
+class HSelectionSpec extends FreeSpec {
 
-  "A Key" - {
+  "A Selection" - {
 
-    "created from a single value (eg \"Hello\")" - {
+    "created from a single value (eg \"d:attr\")" - {
 
-      val skey = HKey("Hello")
+      val csel = HSelection("d:attr")
 
-      "produces an HSingleKey instance" in {
-        assert(skey.isSingle)
-        assert(skey.toString === "S\"Hello\"")
+      "produces an HSelection instance" in {
+        assert(csel.toString === "'d:attr'")
       }
-      "mutates to a range key using to operator" in {
-        val skey2 = skey to "World"
-        assert(skey2.isRange)
-        assert(skey2.toString === "R[\"Hello\" -> \"World\"]")
-      }
-      "mutates to a multiple key using + operator" in {
-        val skey3 = skey + "World"
-        assert(skey3.isMultiple)
-        assert(skey3.toString === "M[\"Hello\",\"World\"]")
-      }
-      "mutates to a multiple key using ++ operator" in {
-        val skey4 = skey ++ List("Bonjour", "Monde")
-        assert(skey4.isMultiple)
-        assert(skey4.toString === "M[\"Bonjour\",\"Hello\",\"Monde\"]")
+      "mutates to an HStarSelection when selecting '*'" in {
+        val csel1 = csel.select("*")
+        assert(csel1.toString === "*")
       }
     }
 
-    "created as a multiple value" - {
-
-      val mkey = HKey(List("ABC", "DEF"))
-      "produces an HMultipleKey instance" in {
-        assert(mkey.isMultiple)
-        assert(mkey.toString === "M[\"ABC\",\"DEF\"]")
-      }
-      "is always sorted" - {
-        val mkeyo = HKey(List("789", "456", "123"))
-        "at initialization" in {
-          assert(mkeyo.isMultiple)
-          assert(mkeyo.toString === "M[\"123\",\"456\",\"789\"]")
-        }
-        "after insertion" in {
-          val mkeyo2 = mkeyo + "567"
-          assert(mkeyo2.isMultiple)
-          assert(mkeyo2.toString === "M[\"123\",\"456\",\"567\",\"789\"]")
-        }
-      }
-      "eliminates duplicates" - {
-        val mkeyd = HKey(List("789", "456", "123", "456", "789"))
-        "at initialization" in {
-          assert(mkeyd.isMultiple)
-          assert(mkeyd.toString === "M[\"123\",\"456\",\"789\"]")
-        }
-        "at insertion" in {
-          val mkeyd2 = mkeyd + "456"          
-          assert(mkeyd2.isMultiple)
-          assert(mkeyd2.toString === "M[\"123\",\"456\",\"789\"]")
-        }
-      }
+    "created as a star value (\"*\")" - {
       
-
-      val mkey2 = mkey to "XYZ" //> mkey2  : org.edma.hbase.HKey = Invalid
-      val mkey3 = mkey + "XYZ" //> mkey3  : org.edma.hbase.HKey = M["ABC","DEF","XYZ"]
-      val mkey4 = mkey3 ++ List("GHI", "JKL") //> mkey4  : org.edma.hbase.HKey = M["ABC","DEF","GHI","JKL","XYZ"]
-
-    }
-
-    "created from a pattern value like \"Hello%\"" - {
-
-      val pkey = HKey("Hello%")
-
-      "produces an HPatternKey instance" in {
-        assert(pkey.isPattern)
-        assert(pkey.toString === "P\"Hello%\"")
+      val ssel = HSelection("*")
+      "produces an HStarSelection instance" in {
+        assert(ssel.toString === "*")
       }
-      "unless '%' found before last char" in {
-        val wkey1 = HKey("%Hello")
-        assert(wkey1.isInvalid)
-        val wkey2 = HKey("Hel%lo")
-        assert(wkey1.isInvalid)
-      }
-      "mutates to a range key using to operator" - {
-
-        "if new bound is after pattern" in {
-            val pkey2 = pkey to "World"
-            assert(pkey2.isRange)
-            assert(pkey2.toString === "R[\"Hello\" -> \"World\"]")
-        }
-        
-        "but fails if new bound is before pattern" in {
-          val pkey3 = pkey to "A"
-          assert(pkey3.isInvalid)
-          assert(pkey3 == HInvalidKey)
-          assert(pkey3.toString === "Invalid")
-        }
+      "voids additional selected columns" in {
+        val ssel1 = ssel.select("d:attr")
+        assert(ssel1.toString === "*")
       }
     }
-
-    "created as a range key" - {
-      val rkey = HKey from ("ABC") to ("DEF")
-
-      "produces a range key" in {
-        assert(rkey.isRange)
-        assert(rkey.toString === "R[\"ABC\" -> \"DEF\"]")
-      }
-      "extends to a new range" - {
-        
-        "when extension is after upper bound" in {
-          val rkey2 = rkey to "XYZ"
-          assert(rkey2.isRange)
-          assert(rkey2.toString === """R["ABC" -> "XYZ"]""")
-        }
-        "but fails otherwise" in {
-          val rkey3 = rkey to "BCD"
-          assert(rkey3.isInvalid)
-          assert(rkey3 == HInvalidKey)
-          assert(rkey3.toString === "Invalid")
-        }
-      }
-    }
-
-
-    val tkey = HKey("123", "456") //> tkey  : org.edma.hbase.HKey = M["123","456"]
-    val tkeyd = HKey("789", "456", "123", "456", "789")
-    //> tkeyd  : org.edma.hbase.HKey = M["123","456","789"]  // Describe a scope for a subject, in this case: "A Set"
 
   }
+
+  /*
+  val esel = HSelection()                         //> esel  : org.edma.hbase.HSelection = 
+  
+  val lsel = HSelection("d:attr1" :: "d:attr2" :: Nil)
+                                                  //> lsel  : org.edma.hbase.HSelection = 'd:attr1', 'd:attr2'
+  val lsel1 = lsel.select("d:attr3 ")             //> lsel1  : org.edma.hbase.HSelection = 'd:attr1', 'd:attr2', 'd:attr3 '
+  val lsel2 = lsel1.select("d:attr4" :: "d:attr5" :: Nil)
+                                                  //> lsel2  : org.edma.hbase.HSelection = 'd:attr1', 'd:attr2', 'd:attr3 ', 'd:at
+                                                  //| tr4', 'd:attr5'
+   */
 }

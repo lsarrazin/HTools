@@ -26,7 +26,7 @@ import org.edma.hbasetools.repl.{HBaseToolsCommand, HBaseToolsCommandProvider}
 
 class HShell(conf: HConfiguration) {
 
-  lazy val conn: HConnection = new HConnection(conf)
+  lazy val conn: HConnection = HConnection.configure(conf)
 
   def disconnect: Unit = conn.disconnect
   def reconnect: Unit = conn.reconnect
@@ -36,16 +36,8 @@ class HShell(conf: HConfiguration) {
    * Low-level table list
    * @return Array of accessible (granted) tables
    */
-  lazy val list: Array[String] = {
-    def listTables(admin: Admin): Array[String] = {
-      // list the tables
-      val listTables = admin.listTables()
-      listTables.map(_.getNameAsString)
-    }
-
-    conn.adminCall(Array.empty[String])(listTables)
-  }
-
+  lazy val list: Array[String] = conn.listTables
+  
   def listNamespaces: Array[String] = list.map(_.split(":")(0))
   def listTables(ns: String): Array[String] = list.filter(_.startsWith(ns)).map(_.split(":")(1))
   def listTables: Array[String] = listTables("")

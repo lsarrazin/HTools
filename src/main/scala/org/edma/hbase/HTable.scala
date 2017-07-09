@@ -21,7 +21,7 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.{ CellUtil, HBaseConfiguration, HTableDescriptor, TableName }
 import scala.collection.JavaConverters._
 
-trait HTableInterface {
+trait HTable {
 
   val tname: String
 
@@ -48,7 +48,7 @@ trait HTableInterface {
 
 }
 
-class HTable(conn: HConnection, name: String) extends HTableInterface {
+class HValidTable(table: Table, name: String) extends HTable {
 
   val tname: String = name
 
@@ -57,9 +57,6 @@ class HTable(conn: HConnection, name: String) extends HTableInterface {
 
   /** HBase table descriptor */
   lazy val tableDescriptor: HTableDescriptor = new HTableDescriptor(tableName)
-
-  /** HBase table handler */
-  lazy val table: Table = conn.getTable(tableName)
 
   /** Single value read */
   override def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte] = {
@@ -85,7 +82,9 @@ class HTable(conn: HConnection, name: String) extends HTableInterface {
   }
 }
 
-class HInvalidTable(conn: HConnection, name: String) extends HTable(conn, name) {
+class HInvalidTable(name: String) extends HTable {
+
+  val tname: String = name
 
   /** Single value read */
   override def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte] = {
@@ -105,15 +104,45 @@ class HInvalidTable(conn: HConnection, name: String) extends HTable(conn, name) 
 
 }
 
-object HTable {
+class HDummyTable(name: String) extends HTable {
+  
+  //TODO: append mutable hash map to simulate read/writes
+  //TODO: declare a default dataset
+  
+  val tname: String = name
 
-  def apply(conn: HConnection, name: String): HTable = {
-    if (conn.hasTable(TableName.valueOf(name))) {
-      new HTable(conn, name)
-    } else {
-      new HInvalidTable(conn, name)
-    }
+  /** Single value read */
+  override def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte] = {
+    debug("Read attempt on dummy table " + tname)
+    new Array[Byte](0)
   }
 
+  override def get(key: Array[Byte], cf: Array[Byte]): Result = {
+    debug("Read attempt on dummy table " + tname)
+    new Result
+  }
+
+  /** Single value write */
+  override def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]) = {
+    debug("Write attempt on dummy table " + tname)
+  }
+
+}
+
+object HTable {
+
+  def apply(conn: HConnection, name: String): HTable = conn match {
+    case rc: HRunnableConnection =>
+      if (conn.hasTable(name)) {
+        new HValidTable(rc.getHBaseTable(name), name)
+      } else {
+        new HInvalidTable(name)
+      }
+    case rc: HSimulatedConnection =>
+      new HDummyTable(name)
+    case _ => new HInvalidTable(name)
+  }
+
+  def apply(table: Table, name: String): HTable = new HValidTable(table, name)
 }
 

@@ -33,13 +33,13 @@ class HKeySpec extends FreeSpec {
 
     "created as a multiple value" - {
 
-      val mkey = HKey(List("ABC", "DEF"))
+      val mkey = HKey("ABC", "DEF")
       "produces an HMultipleKey instance" in {
         assert(mkey.isMultiple)
         assert(mkey.toString === "M[\"ABC\",\"DEF\"]")
       }
       "is always sorted" - {
-        val mkeyo = HKey(List("789", "456", "123"))
+        val mkeyo = HKey("789", "456", "123")
         "at initialization" in {
           assert(mkeyo.isMultiple)
           assert(mkeyo.toString === "M[\"123\",\"456\",\"789\"]")
@@ -51,7 +51,7 @@ class HKeySpec extends FreeSpec {
         }
       }
       "eliminates duplicates" - {
-        val mkeyd = HKey(List("789", "456", "123", "456", "789"))
+        val mkeyd = HKey("789", "456", "123", "456", "789")
         "at initialization" in {
           assert(mkeyd.isMultiple)
           assert(mkeyd.toString === "M[\"123\",\"456\",\"789\"]")
@@ -129,5 +129,23 @@ class HKeySpec extends FreeSpec {
     val tkeyd = HKey("789", "456", "123", "456", "789")
     //> tkeyd  : org.edma.hbase.HKey = M["123","456","789"]  // Describe a scope for a subject, in this case: "A Set"
 
+  }
+  
+  "A Key combination (or)" - {
+    "from a single value" - {
+      val key1 = HKey("123")
+      "with a single value produces a multiple values key" in {
+        val key2 = HKey("456")
+        val key3 = key1 or key2
+        assert(key3.isMultiple)
+        assert(key3.toString() == "M[\"123\",\"456\"]")
+      }
+      "with a multiple values produces a multiple values key" in {
+        val key2 = HKey(("456", "789"))
+        val key3 = key1 or key2
+        assert(key3.isMultiple)
+        assert(key3.toString() == "M[\"123\",\"456\",\"789\"]")
+      }
+    }
   }
 }

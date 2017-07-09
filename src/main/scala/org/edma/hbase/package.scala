@@ -35,8 +35,12 @@ package object hbase {
 
   /** I/O */
   def error(msg: String*): Unit = msg.foreach(error)
+  def warn(msg: String*): Unit = msg.foreach(warn)
+  def debug(msg: String*): Unit = msg.foreach(debug)
   def echo(msg: String*): Unit = msg.foreach(echo)
   def error(msg: String): Unit = println(f"[Error] $msg")
+  def warn(msg: String): Unit = println(f"[Warning] $msg")
+  def debug(msg: String): Unit = println(f"[Debug] $msg")
   def echo(msg: String): Unit = println(msg)
   
   implicit def stringToBytes(s: String): Array[Byte] = Bytes.toBytes(s)
