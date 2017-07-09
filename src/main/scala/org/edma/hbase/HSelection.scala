@@ -116,24 +116,6 @@ object HSelection {
     new HEmptySelection
   }
 
-  /*
-  def apply(col: String): HSelection = {
-    if (col == "*") {
-      new HStarSelection
-    } else {
-      new HCustomSelection(col :: Nil)
-    }
-  }
-  
-  def apply(cols: Iterable[String]): HSelection = {
-    new HCustomSelection(cols)
-  }
-  
-  def apply(cols: Product): HSelection = {
-    val columns: Iterable[String] = cols.productIterator.toIterable.map(_.toString)
-    new HCustomSelection(columns)   
-  }*/
-
   def apply(any: Any): HSelection = any match {
     case c: String => {
       if (c == "*") {
