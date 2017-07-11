@@ -67,6 +67,16 @@ val tlist = hsh list
 hsh.desc tlist(0)
 ```
 
+### Working with keys
+
+```scala
+```
+
+### Working with queries
+
+```scala
+```
+
 # Readme help -- REMOVE when mastered
 Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
 

@@ -144,5 +144,7 @@ object HTable {
   }
 
   def apply(table: Table, name: String): HTable = new HValidTable(table, name)
+  
+  def dummy(): HTable = new HDummyTable("Dummy")
 }
 

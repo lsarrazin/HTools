@@ -38,6 +38,9 @@ trait HConnection {
 
   /** Disconnect from HBase */
   def disconnect(): HConnection
+  
+  /** Get connection state */
+  def isConnected(): Boolean = false
 
   /** Get connection status */
   def status(): String
@@ -138,6 +141,9 @@ class HRunnableConnection(conn: Connection, conf: HConfiguration) extends HConfi
     }
   }
   
+  /** Get connection state */
+  override def isConnected(): Boolean = true
+
   /**
    * Low-level HBase interaction, handling connection
    * @param defValue Value to return in case of error
@@ -197,16 +203,18 @@ class HRunnableConnection(conn: Connection, conf: HConfiguration) extends HConfi
     adminCall(false)(_.tableExists(hname))
   }
   
-  /** List all tables from connection */
-  override def listTables: Array[String] = {
-    def listTables(admin: Admin): Array[String] = {
-      // list the tables
-      val listTables = admin.listTables()
-      listTables.map(_.getNameAsString)
-    }
-
-    adminCall(Array.empty[String])(listTables)
+  private def innerListTables(admin: Admin): Array[String] = {
+    debug("Reading tables from HBase")
+      
+    // list the tables
+    val listTables = admin.listTables()
+    listTables.map(_.getNameAsString)
   }
+    
+  private lazy val _tablesList: Array[String] = adminCall(Array.empty[String])(innerListTables)
+
+  /** List all tables from connection */
+  override def listTables: Array[String] = _tablesList
   
 }
 

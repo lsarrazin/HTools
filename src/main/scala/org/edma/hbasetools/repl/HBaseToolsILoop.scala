@@ -55,7 +55,7 @@ class HBaseToolsILoop(hbaseOpts: CommandLine, in0: Option[BufferedReader], out: 
         }
       }
       processLine("""
-        @transient val hsh: org.edma.hbase.HShell = org.edma.hbase.HShell.create(hconf0)
+        @transient var hsh: org.edma.hbase.HShell = org.edma.hbase.HShell.create(hconf0)
         println("Hbase shell available as 'hsh'")
         """)
 

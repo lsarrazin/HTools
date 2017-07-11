@@ -24,25 +24,36 @@ import org.apache.hadoop.security.UserGroupInformation
 
 import org.edma.hbasetools.repl.{HBaseToolsCommand, HBaseToolsCommandProvider}
 
-class HShell(conf: HConfiguration) {
 
-  lazy val conn: HConnection = HConnection.configure(conf)
-
-  def disconnect: Unit = conn.disconnect
-  def reconnect: Unit = conn.reconnect
-  def connect: Unit = conn.connect
-
+abstract class HShell(conf: HConfiguration) {
+  
+  def getConnection: HConnection
+  def getConfiguration: HConfiguration = conf
+  
+  /** Open connection using default configuration */
+  def connect: HShell
+  
+  /** Close connection */
+  def disconnect: HShell
+  
+  /** Reset connection */
+  def reconnect: HShell
+  
+  /** Enquire connection status */
+  def status: String
+  
   /**
    * Low-level table list
    * @return Array of accessible (granted) tables
    */
-  lazy val list: Array[String] = conn.listTables
+  def list: Array[String]
   
   def listNamespaces: Array[String] = list.map(_.split(":")(0))
   def listTables(ns: String): Array[String] = list.filter(_.startsWith(ns)).map(_.split(":")(1))
-  def listTables: Array[String] = listTables("")
+  def listTables: Array[String] = list.map(_.split(":")(1))
 
-  def showTables: Unit = listTables(defaultNS).foreach(echo)
+  def showTables(ns: String): Unit = listTables(ns).foreach(echo)
+  def showTables(): Unit = listTables.foreach(echo)
   def showNamespaces: Unit = listNamespaces.foreach(echo)
 
   /**
@@ -56,38 +67,114 @@ class HShell(conf: HConfiguration) {
     case _            => error(f"Unknown object $what in show command")
   }
   
-  /**
-   * use command
-   * @param ns namespace to use as default
-   */
-  def use(ns: String): Unit =
-    if (listNamespaces.contains(ns)) {
-      defaultNS = ns
-    } else {
-      error(f"NameSpace $ns does not exist")
-    }
-
-  def use: Unit = defaultNS = ""
-
-  private var defaultNS: String = ""
-
+  /** Get current namespace */
+  def getUseNS: String
+  
+  /** Set current namespace
+   *  @param ns namespace to use as default */
+  def use(ns: String): HShell
+  
+  /** Normalize table name
+   *  @param tname Table name to normalize */
   def normalizeTableName(tname: String): String = {
     if (tname.contains(":")) {
       tname
     } else {
-      defaultNS + ":" + tname
+      val defNS = getUseNS
+      if (defNS.length > 0)
+        defNS + ":" + tname
+      else 
+        tname
     }
   }
 
-  def status: Unit = conn.status
+  /** Describe table using schema */
+  def desc(tname: String): Unit
+}
+
+
+class HDisconnectedShell(conf: HConfiguration) extends HShell(conf) {
   
-  def desc(tname: String): Unit = {
+  val conn: HConnection = HConnection.configure(conf)
+  def getConnection: HConnection = conn
+  
+  override def connect: HShell = {
+    echo("Connecting to HBase")
+    val cconn = conn.connect
+    if (cconn.isConnected) {
+      new HConnectedShell(conf, cconn)
+    } else {
+      new HDisconnectedShell(conf)
+    }
+  }
+
+  override def disconnect: HShell = {
+    error("Not connected to HBase")
+    this
+  }
+  
+  override def reconnect: HShell = {
+    warn("Not connected to HBase")
+    connect
+  }
+  
+  override def status: String = "Not connected to HBase"
+  
+  override def list: Array[String] = Array[String]()
+
+  def getUseNS: String = ""
+  
+  def use(ns: String): HShell = this
+  
+  override def desc(tname: String): Unit = {
+    error("Not connected to HBase")
+  }
+}
+
+
+class HConnectedShell(conf: HConfiguration, conn: HConnection, defNS: String = "") extends HShell(conf) {
+
+  def getConnection: HConnection = conn
+
+  override def connect: HShell = {
+    error("Already connected to HBase")
+    this
+  }
+
+  override def disconnect: HShell = {
+    echo("Disconnecting from HBase")
+    conn.disconnect
+    new HDisconnectedShell(conf)
+  }
+  
+  override def reconnect: HShell = {
+    conn.disconnect
+    new HDisconnectedShell(conf).connect
+  }
+
+  override def list: Array[String] = conn.listTables
+  
+  override def getUseNS: String = defNS
+
+  override def use(ns: String): HShell =
+    if (listNamespaces.contains(ns)) {
+      new HConnectedShell(conf, conn, ns)
+    } else {
+      error(f"NameSpace $ns does not exist")
+      this
+    }
+
+  override def status: String = conn.status
+  
+  override def desc(tname: String): Unit = {
     val nname = normalizeTableName(tname)
     echo(f"Querying $nname for schema")
     
     val table: HTable = HTable(conn, nname)
     val schema: HSchema = new HSchema(table)
-    echo(schema.toJSon)
+    
+    val json = schema.toPrintable
+    echo(json)
   }
 }
 
@@ -96,9 +183,9 @@ object HShell extends HBaseToolsCommandProvider {
   private var current: Option[HShell] = None
 
   def create(conf: HConfiguration): HShell = {
-    val conn = new HShell(conf)
-    current = Some(conn)
-    conn
+    val sh = new HDisconnectedShell(conf)
+    current = Some(sh)
+    sh
   }
 
   def terminate: Unit =
@@ -113,8 +200,9 @@ object HShell extends HBaseToolsCommandProvider {
     }
  
   def getShellCommands: List[HBaseToolsCommand] = List(
-    HBaseToolsCommand("connect", "", "def connect: Unit = hsh.connect", "Connect to HBase", "Connect to HBase using command line parameters"),
-    HBaseToolsCommand("disconnect", "", "def disconnect: Unit = hsh.disconnect", "Disconnect from HBase", "Disconnect from HBase"),
-    HBaseToolsCommand("status", "", "def status: Unit = hsh.status", "Show connection status", "Get details about current connection")
+    HBaseToolsCommand("connect", "", "def connect: Unit = { hsh = hsh.connect }", "Connect to HBase", "Connect to HBase using command line parameters"),
+    HBaseToolsCommand("disconnect", "", "def disconnect: Unit = { hsh = hsh.disconnect }", "Disconnect from HBase", "Disconnect from HBase"),
+    HBaseToolsCommand("status", "", "def status: Unit = { echo(hsh.status) }", "Show connection status", "Get details about current connection"),
+    HBaseToolsCommand("desc", "", "def desc(table: String): Unit = { hsh.desc(table) }", "Describe table", "Get details about table")
   )
 }
