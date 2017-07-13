@@ -4,7 +4,7 @@ import collection.immutable.SortedSet
 
 object KeyType extends Enumeration {
   type KeyType = Value
-  val Single, Multiple, Range, Pattern, Invalid = Value
+  val Single, Multiple, Range, Pattern, Sample, Invalid = Value
 }
 import KeyType._
 
@@ -17,6 +17,7 @@ abstract class HKey {
   def isRange: Boolean = (ktype == Range)
   def isPattern: Boolean = (ktype == Pattern)
   def isInvalid: Boolean = (ktype == Invalid)
+  def isSample: Boolean = (ktype == Sample)
 
   def to(ev: String): HKey = HInvalidKey
 
@@ -146,7 +147,13 @@ class HRangeKey(kvs: String, kve: String) extends HKey {
  * val key = HKey("12345", "345%", "67890")
  * */
 
+class HSampleKey extends HKey {
+  val ktype: KeyType = Sample
+}
+
 object HKey {
+  
+  def apply(): HKey = new HSampleKey
 
   def from(kv: String): HKey = HKey(kv)
   def :=(kv: String): HKey = HKey(kv)

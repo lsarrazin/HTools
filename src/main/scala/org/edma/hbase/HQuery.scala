@@ -13,9 +13,11 @@ new HQuery
   .where key in (list Id)
   .where key between (low, high)
   .where key like "pattern"
-  .count
-  .foreach
-  .
+
+  act one of :
+   - count: Int
+   - gather: List[HResult]
+   - etc.
   
  */
 
@@ -92,6 +94,11 @@ trait HQuery {
     } else {
       Nil
     }
+  }
+  
+  def explain(implicit conn: HConnection): Unit = {
+    val reader = new HReader(conn, this)
+    reader.explain
   }
 }
 

@@ -187,6 +187,15 @@ class HSchema(table: HTable) {
 
 object HSchema {
 
+  /** Create HSchema from table name
+   *  @param tname Table name
+   *  @param conn  HBase connection */
+  def apply(tname: String)(implicit conn: HConnection) = conn.getTable(tname)
+  
+  /** Create HSchema from HTable
+   *  @param table HTable */
+  def apply(table: HTable) = new HSchema(table)
+  
   def schemaSyntax: String = """
 {
   "id": "Nom_de_la_table",

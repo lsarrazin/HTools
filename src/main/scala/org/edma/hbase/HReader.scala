@@ -12,6 +12,14 @@ class HReader(conn: HConnection, query: HQuery) {
   lazy val schema: HSchema = HSchema(table)
   
   def explain: Unit = {
-    
+    echo("Execution plan of query ")
+    echo(query.toString)
   }
 }
+
+class HReaderPlan(key: HKey) {
+  
+  
+  
+}
+

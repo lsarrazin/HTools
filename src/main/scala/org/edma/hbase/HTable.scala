@@ -46,6 +46,7 @@ trait HTable {
   /** Single value write */
   def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]): Unit
 
+  override def toString: String = tname
 }
 
 class HValidTable(table: Table, name: String) extends HTable {
