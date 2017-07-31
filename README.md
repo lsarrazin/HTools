@@ -1,5 +1,7 @@
 # HBase Tools
 
+# WARNING: Not functional yet ! Work in progress !
+
 ## Purpose
 
 ## Installation
@@ -74,7 +76,15 @@ hsh.desc tlist(0)
 
 ### Working with queries
 
+Queries are created using HQuery class.
+A runnable query consists of one or more attribute selection clause (select), one table (from) 
+
 ```scala
+// Retrieve data from ns:table under row "mykey"
+val myQuery = HQuery
+  .select "f1:attr1"
+  .from "ns:table"
+  .where "mykey"
 ```
 
 # Readme help -- REMOVE when mastered

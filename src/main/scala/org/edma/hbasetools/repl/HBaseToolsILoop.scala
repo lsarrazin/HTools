@@ -72,7 +72,10 @@ class HBaseToolsILoop(hbaseOpts: CommandLine, in0: Option[BufferedReader], out: 
   def declareCommands(hbcp: HBaseToolsCommandProvider): Unit = {
     intp.beQuietDuring {
       hbcp.getShellCommands foreach {
-        cmd: HBaseToolsCommand => processLine(cmd.getCode)
+        cmd: HBaseToolsCommand => {
+          echo("Cmd: " + cmd.getCode)
+          processLine(cmd.getCode)
+        }
       }
     }
   }
@@ -190,128 +193,9 @@ object HBaseToolsILoop {
     }
   }
 
+  /**
+   * Creates an interpreter loop with default settings and feeds
+   * the given code to it as input.
+   */
   def run(hbaseOpts: CommandLine, lines: List[String]): String = run(hbaseOpts: CommandLine, lines.map(_ + "\n").mkString)
 }
-
-
-
-
-
-
-
-
-/*
-import java.io.BufferedReader
-import java.text.SimpleDateFormat
-import scala.tools.nsc.GenericRunnerSettings
-import scala.tools.nsc.interpreter.{ IR, ILoop, JPrintWriter }
-
-/**
- * ReplILoop - core of HBaseTools REPL.
- * @param replClassLoader [[ReplClassLoader]] used for runtime/in-memory classloading
- * @param hbaseOpts user arguments for HBase configuration
- */
-class ReplILoop(replClassLoader: ReplClassLoader,
-                hbaseOpts: CommandLine,
-                in: Option[BufferedReader],
-                out: JPrintWriter)
-    extends ILoop(in, out) {
-
-  def this(replCL: ReplClassLoader, opts: CommandLine) =
-    this(replCL, opts, None, new JPrintWriter(Console.out, true))
-
-  // def addThunk(f: => Unit): Unit = intp.initialize(f)
-
-  settings = new GenericRunnerSettings(echo)
-
-  override def prompt: String = /* Console.GREEN + */ "\nhtools> " /* + Console.RESET */
-
-  private def initHbaseShell(): Unit = {
-    intp.interpret("val hconf0: org.edma.hbase.HConfiguration = new HConfiguration")
-    hbaseOpts.getOptions foreach { opt =>
-      val p: String = opt.getOpt
-      if (hbaseOpts.hasOption(p)) {
-        val v: String = hbaseOpts.getOptionValue(p)
-        intp.interpret(f"""hconf0.configure("${p}", "${v}")""")
-      }
-    }
-    intp.interpret("val hsh: org.edma.hbase.HShell = HShell.create(hconf0)")
-  }
-
-  /**
-   * REPL magic to get a new HBaseTools context using arguments from the command line
-   * User may specify a name for the context val, default is `hsh`.
-   */
-  /*
-
-  // Options for creating new contexts
-  private var hbtOpts: Array[String] = args.toArray
-
-  // Hidden magics/helpers for REPL session jars.
-
-  private val createJarCmd = LoopCommand.nullary(
-    "createJar", "create a Scio REPL runtime jar",
-    () => { Result.resultFromString(replClassLoader.createReplCodeJar) })
-
-  private val getNextJarCmd = LoopCommand.nullary(
-    "nextJar", "get the path of the next Scio REPL runtime jar",
-    () => { Result.resultFromString(replClassLoader.getNextReplCodeJarPath) })
-
-  private def newScioCmdImpl(name: String) = {
-    val sc = if (name.nonEmpty) name else "sc"
-    val rsc = "com.spotify.scio.repl.ReplScioContext"
-    val opts = optsFromArgs(hbtOpts)
-    val nextReplJar = replClassLoader.getNextReplCodeJarPath
-    intp.beQuietDuring {
-      intp.interpret(s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"))""")
-    }
-    this.echo("Scio context available as '" + sc + "'")
-    Result.default
-  }
-
-  */
-
-  // override def commands: List[LoopCommand] = super.commands ++ scioCommands
-  override def commands: List[LoopCommand] =
-    super.commands ++ hbaseCommands
-
-  // =======================================================================
-  // Initialization
-  // =======================================================================
-
-  /*
-  private def optsFromArgs(args: Seq[String]): String = {
-    val factory = "org.apache.beam.sdk.options.PipelineOptionsFactory"
-    val options = "org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"
-    val argsStr = args.mkString("\"", "\", \"", "\"")
-    s"""$factory.fromArgs($argsStr).as(classOf[$options])"""
-  }
-  */
-
-  private def addImports(): IR.Result =
-    intp.interpret(
-      """import org.edma.hbase._
-        |""".stripMargin)
-
-  /*
-  private def loadIoCommands(): IR.Result = {
-    intp.interpret(
-      """
-        |val _ioCommands = new com.spotify.scio.repl.IoCommands(sc.options)
-        |import _ioCommands._
-      """.stripMargin)
-  }
-  */
-
-  override def createInterpreter(): Unit = {
-    super.createInterpreter()
-    intp.beQuietDuring {
-      addImports()
-      initHbaseShell()
-      // newScioCmdImpl("sc")
-      // loadIoCommands()
-    }
-  }
-
-}
-*/

@@ -200,9 +200,10 @@ object HShell extends HBaseToolsCommandProvider {
     }
  
   def getShellCommands: List[HBaseToolsCommand] = List(
-    HBaseToolsCommand("connect", "", "def connect: Unit = { hsh = hsh.connect }", "Connect to HBase", "Connect to HBase using command line parameters"),
-    HBaseToolsCommand("disconnect", "", "def disconnect: Unit = { hsh = hsh.disconnect }", "Disconnect from HBase", "Disconnect from HBase"),
-    HBaseToolsCommand("status", "", "def status: Unit = { echo(hsh.status) }", "Show connection status", "Get details about current connection"),
-    HBaseToolsCommand("desc", "", "def desc(table: String): Unit = { hsh.desc(table) }", "Describe table", "Get details about table")
+    HBaseToolsCommand("desc", "def desc(table: String): Unit = { hsh.desc(table) }", "", "Describe table", "Get details about table"),
+    HBaseToolsCommand("test", "def test: Unit = { echo(hsh.toString); echo(hsh.status) }", "", "Test command", "Give some details"),
+    HBaseToolsCommand("connect", "def connect: Unit = { hsh = hsh.connect; echo(hsh.status); }", "", "Connect to HBase", "Connect to HBase using command line parameters"),
+    HBaseToolsCommand("disconnect", "def disconnect: Unit = { hsh = hsh.disconnect; echo(hsh.status) }", "", "Disconnect from HBase", "Disconnect from HBase"),
+    HBaseToolsCommand("status", "def status: Unit = { echo(hsh.status) }", "Show connection status", "", "Get details about current connection")
   )
 }

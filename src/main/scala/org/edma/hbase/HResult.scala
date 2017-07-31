@@ -1,5 +1,8 @@
 package org.edma.hbase
 
-class HResult {
+import org.apache.hadoop.hbase.client.{ HTable => HBaseTable, _ }
+
+class HResult(data: Result) {
+
   
 }

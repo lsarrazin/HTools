@@ -149,6 +149,8 @@ class HRangeKey(kvs: String, kve: String) extends HKey {
 
 class HSampleKey extends HKey {
   val ktype: KeyType = Sample
+  
+  override def toString = "-"
 }
 
 object HKey {

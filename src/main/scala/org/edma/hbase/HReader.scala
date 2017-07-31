@@ -14,6 +14,25 @@ class HReader(conn: HConnection, query: HQuery) {
   def explain: Unit = {
     echo("Execution plan of query ")
     echo(query.toString)
+
+    val table: HTable = query.getFrom.getOrElse(new HDummyTable("ExplainTable"))
+    
+    val fetcher: Iterable[HFetcher] = HFetcher.forKey(keys, table)
+    fetcher.foreach(println)
+  }
+  
+  def execute: Unit = {
+    echo("Running query ")
+    echo(query.toString)
+    
+    val table: HTable = query.getFrom.getOrElse(new HInvalidTable("NoTableFromQuery"))
+    
+    val fetcher: Iterable[HFetcher] = HFetcher.forKey(keys, table)
+    fetcher.foreach(fetchRows)    
+  }
+  
+  private def fetchRows(fetcher: HFetcher): Unit = {
+    
   }
 }
 

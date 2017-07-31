@@ -33,15 +33,20 @@ trait HTable {
   def getTableName: String =
     if (tname.contains(':')) { tname.split(':')(1) } else { tname }
 
+  /*
   def hquery(conn: HConnection)(rowId: Get) = {
 
   }
+  */
 
   /** Single value read */
   def get(key: Array[Byte], cf: Array[Byte], cq: Array[Byte]): Array[Byte]
 
   /** Single CF read */
   def get(key: Array[Byte], cf: Array[Byte]): Result
+  
+  /** Single row read */
+  def get(key: Array[Byte]): Result
 
   /** Single value write */
   def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]): Unit
@@ -72,6 +77,12 @@ class HValidTable(table: Table, name: String) extends HTable {
     table.get(get)
   }
 
+  /** Single row read */
+  def get(key: Array[Byte]): Result = {
+    val get: Get = new Get(key)
+    table.get(get)
+  }
+
   /** Single value write */
   override def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]) = {
     val put: Put = if (ts < 0) {
@@ -98,6 +109,11 @@ class HInvalidTable(name: String) extends HTable {
     new Result
   }
 
+  override def get(key: Array[Byte]): Result = {
+    error("Read attempt on inexisting table " + tname)
+    new Result
+  }
+
   /** Single value write */
   override def put(key: Array[Byte], cf: Array[Byte], cq: Array[Byte], ts: Long = -1, value: Array[Byte]) = {
     error("Write attempt on inexisting table " + tname)
@@ -119,6 +135,11 @@ class HDummyTable(name: String) extends HTable {
   }
 
   override def get(key: Array[Byte], cf: Array[Byte]): Result = {
+    debug("Read attempt on dummy table " + tname)
+    new Result
+  }
+
+  override def get(key: Array[Byte]): Result = {
     debug("Read attempt on dummy table " + tname)
     new Result
   }
