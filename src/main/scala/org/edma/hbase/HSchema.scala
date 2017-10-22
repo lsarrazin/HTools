@@ -73,7 +73,8 @@ class HSchema(table: HTable) {
   private def loadFromTable: SchemaTable = {
     val rawSchema: Array[Byte] = table.get(schemaRowId, schemaCfId, schemaCqId)
     if (rawSchema.length > 0) {
-      try { 
+      try {
+        echo(rawSchema)
         jsonToSchema(rawSchema) 
       } catch {
         case any: Throwable => {
@@ -96,7 +97,7 @@ class HSchema(table: HTable) {
   
   /** convert json schema as SchemaTable */
   private def jsonToSchema(rawJSon: String): SchemaTable = {
-    val json: JsValue = Json.parse(rawJSon)
+    lazy val json: JsValue = Json.parse(rawJSon)
     
     implicit val schemaColumnQualifierReads: Reads[SchemaColumnQualifier] = (
       (JsPath \ "name").read[String] and
@@ -246,4 +247,43 @@ object HSchema {
 """
 
    def sampleSchema: String = """{"id":"dco_edma:Object","description":"Table test EDMA","rowkey":{"description":"Clé primaire des objets, au format NNNNNN","syntax":"[0-9]+","example":"000000"},"columnFamilies":[{"name":"d","description":"CF principale des données","columnQualifiers":[{"name":"col1","type":"String","syntax":"Texte libre","searchable":true,"description":"Colonne de type texte","example":"Hello, world!"},{"name":"col2","type":"Int","description":"Colonne de type entier","example":"123"},{"name":"col3","type":"Boolean","description":"Colonne de type booléen","example":"true"}]}]}"""
+
+   def currentSchema: String = """
+{
+  "id": "dco_edma:Object",
+  "description": "Table test EDMA",
+  "rowkey": {
+      "description": "Clé primaire des objets, au format NNNNNN",
+      "syntax": "[0-9]+",
+      "example": "000000"
+    },
+  "columnFamilies": [
+    { "name": "d",
+      "description": "CF principale des données",
+      "columnQualifiers": [
+          {
+            "name": "col1",
+            "type": "String",
+            "syntax": "Texte libre",
+            "searchable": true,                                  
+            "description": "Colonne de type texte",
+            "example": "Hello, world!"
+          },
+          {
+            "name": "col2",
+            "type": "Int",
+            "description": "Colonne de type entier",
+            "example": "123"
+          },
+          {
+            "name": "col3",
+            "type": "Boolean",
+            "description": "Colonne de type booléen",
+            "example": "true"
+          }
+        ]
+    }
+  ]
+}"""
+
 }

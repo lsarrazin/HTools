@@ -86,15 +86,21 @@ class HConfiguredConnection(conf: HConfiguration) extends HConnection {
 
     echo(f"Connecting to HBase as $principal", f"  using keytab $keytab")
 
-    UserGroupInformation.setConfiguration(config)
-    UserGroupInformation.loginUserFromKeytab(principal, keytab)
+    try {
+      UserGroupInformation.setConfiguration(config)
+      UserGroupInformation.loginUserFromKeytab(principal, keytab)
 
-    val conn: Connection = ConnectionFactory.createConnection(config)
-    if (conn.isClosed()) {
-      error("Unable to get HBase connection")
-      this
-    } else {
-      new HRunnableConnection(conn, conf)
+      val conn: Connection = ConnectionFactory.createConnection(config)
+      if (conn.isClosed()) {
+        error("Unable to get HBase connection")
+        this
+      } else {
+        new HRunnableConnection(conn, conf)
+      }
+    } catch {
+      case e: Throwable => 
+        error(e.getMessage)
+        this
     }
   }
 
