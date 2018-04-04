@@ -1,6 +1,6 @@
 # HBase Tools
 
-# WARNING: Not functional yet ! Work in progress !
+# WARNING: Abandonware! Scala REPL has evolved, leading to too much rework on the REPL (and not enough time)
 
 ## Purpose
 
